@@ -40,13 +40,17 @@ applicationTable = Map.fromList [("pdf", "mupdf"), ("jpeg", "feh"),
 -- These should be the only arguements that do not start with a '-'.
 -------------------------------------------------------------------------------
 findFiles :: [String] -> [String]
-findFiles = filter (\ x -> not (isFlag x))
+findFiles = filter (not . isFlag)
+
+-- test to see if an arguement is a long or short flag.
+isFlag :: String -> Bool
+isFlag entry = neither [isLongFlag entry, isShortFlag entry]
+               where neither = not . and
 
 -- test to see if a single arguement is a long flag.
+isLongFlag :: String -> Bool
 isLongFlag entry = and [(entry !! 0 == '-'), (entry !! 1 == '-')]
 
 -- test to see if a single arguement is a short flag.
+isShortFlag :: String -> Bool
 isShortFlag entry = and [(entry !! 0 == '-'), (entry !! 1 /= '-')]
-
-isFlag entry = neither [isLongFlag entry, isShortFlag entry]
-               where neither = not . and
