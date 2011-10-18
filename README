@@ -1,0 +1,12 @@
+* Goal
+  The goal of this project is to duplicate and extend the NeXT application
+  'open' in Haskell. Open is a command line utility that opens a file using the
+  correct application, where the built-in 'launch services' feature of OS X
+  determines the correct application.
+
+** Extensions
+   So far I added the ability to open an arbitrary number of programs
+   simultaneously.
+
+* License
+  GPL. I really like freedom and I want to cut and paste that in here later.
