@@ -32,7 +32,8 @@ attachCommands file =
 -- This needs to be replaced by a proper parser with a dot file.
 applicationTable :: Map.Map String String
 applicationTable = Map.fromList [("pdf", "mupdf"), ("jpeg", "feh"),
-                                 ("tex", "emacs"), ("odt", "libreoffice"),
+                                 ("odt", "libreoffice"), ("org", "emacs"), 
+                                 ("ods", "libreoffice"),
                                  ("avi", "vlc"), ("flac", "vlc")]
 
 -------------------------------------------------------------------------------
