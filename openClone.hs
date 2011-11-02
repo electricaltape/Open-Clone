@@ -22,20 +22,20 @@ attachCommands input = case input of
   Left errorMessage -> error errorMessage
 -- if given an error message, return it to stderr.
 
-attachApplication :: (FlagOption, [String]) -> [String]
-attachApplication (flagValue, inputArgs) = case flagValue of
+attachApplications :: (FlagOption, [String]) -> [String]
+attachApplications (flagValue, inputArgs) = case flagValue of
 -- in the default case, look up the application associated with the first file.
   Default     -> case Map.lookup (suffix (head inputArgs)) applicationTable of
-    Just app  -> applyApplication app inputArgs
+    Just app  -> prependApplication app inputArgs
     Nothing   -> error "application not defined"
 -- if the flag is for an application, that application is the first argument.
-  Application -> map ((head inputArgs ++ " ") ++) (tail inputArgs)
+  Application -> prependApplication (head inputArgs ++ " ") (" " : tail inputArgs)
 -- if the flag is for the editor, launch it with the editor variable.
   Editor      -> [editorName ++ " " ++ (unwords inputArgs)]
 -- if the flag is for help, echo the help message.
   Help        -> ["echo " ++ usageMessage]
 -- function to prefix files with the appropriate application.
-  where applyApplication app files = map ((app ++ " ") ++) files
+  where prependApplication app files = map ((app ++ " ") ++) files
         suffix = reverse . takeWhile (/='.') . reverse
 
 -- Given some list of command line arguments, return either an error or a tuple
@@ -47,6 +47,7 @@ findFlag commandLineArgs
     "-a" -> Right (Application, tail commandLineArgs)
     "-e" -> Right (Editor, tail commandLineArgs)
     "-H" -> Right (Help, tail commandLineArgs)
+  | head firstArg == '-' = error "undefined flag"
   | otherwise = Right (Default, commandLineArgs)
     where firstArg = head commandLineArgs
 
