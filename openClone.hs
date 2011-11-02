@@ -4,9 +4,11 @@
 -- Description: A clone of the 'open' utility from NeXT
 -------------------------------------------------------------------------------
 
-import System
-import System.Process
-import qualified Data.Map as Map
+import System (getArgs)
+import System.Process (runCommand)
+import System.Posix.Env (getEnv)
+import System.IO.Unsafe (unsafePerformIO)
+import qualified Data.Map as Map (Map, lookup, fromList)
 
 data FlagOption = Default | Application | Editor | Help
 
@@ -14,13 +16,13 @@ data FlagOption = Default | Application | Editor | Help
 -- over the list.
 main = getArgs >>= mapM_ runCommand . attachCommands . findFlag
 
--- new version of attachCommands - work with all the input values (except
--- flags) and return a list of strings to pass to /bin/sh
+-- work with all the input values (except flags) and return a list of strings
+-- to pass to /bin/sh
 attachCommands :: Either String (FlagOption, [String]) -> [String]
 attachCommands input = case input of
-  Right (flagValue, inputArgs) -> attachApplication (flagValue, inputArgs)
-  Left errorMessage -> error errorMessage
+  Right (flagValue, inputArgs) -> attachApplications (flagValue, inputArgs)
 -- if given an error message, return it to stderr.
+  Left errorMessage -> error errorMessage
 
 attachApplications :: (FlagOption, [String]) -> [String]
 attachApplications (flagValue, inputArgs) = case flagValue of
@@ -33,7 +35,7 @@ attachApplications (flagValue, inputArgs) = case flagValue of
 -- if the flag is for the editor, launch it with the editor variable.
   Editor      -> [editorName ++ " " ++ (unwords inputArgs)]
 -- if the flag is for help, echo the help message.
-  Help        -> ["echo " ++ usageMessage]
+  Help        -> ["echo " ++ "'" ++ usageMessage ++ "'"]
 -- function to prefix files with the appropriate application.
   where prependApplication app files = map ((app ++ " ") ++) files
         suffix = reverse . takeWhile (/='.') . reverse
@@ -51,14 +53,19 @@ findFlag commandLineArgs
   | otherwise = Right (Default, commandLineArgs)
     where firstArg = head commandLineArgs
 
-usageMessage = unlines $ ["Usage: open [-e] [-H] [-a <application>]",
-                          "Help: Open opens files from a shell."]
-
 -- This needs to be replaced by a proper parser with a dot file.
 applicationTable :: Map.Map String String
 applicationTable = Map.fromList [("pdf", "mupdf"), ("jpeg", "feh"),
+                                 ("org", "emacs"),
                                  ("odt", "libreoffice"), ("ods", "libreoffice"),
                                  ("avi", "vlc"), ("flac", "vlc")]
 
--- This needs to be replaced by unsafePerformIO and the getEnv thing.
-editorName = "vim"
+-- Grab the editor name.
+editorName :: String
+editorName = case (unsafePerformIO $ (getEnv "EDITOR")) of
+  Nothing  -> error "EDITOR variable not set"
+  Just app -> app
+
+-- print message for usage
+usageMessage = unlines $ ["Usage: open [-e] [-H] [-a <application>]",
+                          "Help: Open opens files from a shell."]
